@@ -1,0 +1,17 @@
+:noaudio:
+
+ifdef::revealjs_slideshow[]
+
+[#cover,data-background-image="image/1156524-bg_redhat.png" data-background-color="#cc0000"]
+== &nbsp;
+
+[#cover-h1]
+Red Hat Ansible Networking
+
+[#cover-h2]
+The Americas Tech Exchange 2018
+
+[#cover-logo]
+image::{revealjs_cover_image}[]
+
+endif::[]

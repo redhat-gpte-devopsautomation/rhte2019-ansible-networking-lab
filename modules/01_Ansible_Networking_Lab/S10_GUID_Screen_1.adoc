@@ -1,0 +1,14 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== GUID Screen 1
+
+image::images/gg1.png[width=100%]
+
+ifdef::showscript[]
+Transcript:
+
+endif::showscript[]
+
+

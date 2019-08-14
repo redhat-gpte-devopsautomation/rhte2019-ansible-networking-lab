@@ -1,0 +1,33 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== Lab Environment
+
+image::images/basic-topology.png[width=100%]
+
+ifdef::showscript[]
+Transcript:
+
+FinTech's topology is quite simple with 2 Data Centers: DC1 and DC2 which lack
+their own dedicated private inter-connection. Traffic between the 2 sites is
+routed across the Internet in a networking *Tunnel* created between 2 Cisco
+routers, one on each site.
+
+This GRE (Generic Routing Encapsulation) Tunnel between the 2 sites allows traffic to be simply routed back and forward between
+the 2 data Centers as if they had a dedicated connection between the 2 sites.  FinTech's key application is split across the 2 sites and relies on this
+connection
+
+These routers have been hacked in a recent global attack aimed at publicly
+exposed Cisco routers. Since then site-to-site communication has been broken
+though insecure public Internet access exists to all externally exposed
+machines.
+
+Your job will be to regain control and re-configure the Network.
+
+So a quick fly over of key Ansible features, plugins, and modules we will be
+using today - in 5 slides.
+
+endif::showscript[]
+
+

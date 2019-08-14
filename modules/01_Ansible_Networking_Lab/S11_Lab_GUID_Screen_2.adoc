@@ -1,0 +1,14 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== Lab GUID Screen 2
+
+image::images/gg2.png[width=100%]
+
+ifdef::showscript[]
+Transcript:
+
+endif::showscript[]
+
+

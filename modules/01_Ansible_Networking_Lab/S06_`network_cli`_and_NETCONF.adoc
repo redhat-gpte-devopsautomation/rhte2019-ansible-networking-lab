@@ -1,0 +1,46 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== `network_cli` and NETCONF
+
+* Ansible 2.5 introduced 2 new Connection Types
+* Network Modules now _appear to behave_ much more like Server Modules
+** NETCONF
+** network_cli
+
+* `network_cli` connection syntax
++
+[source,yaml]
+----
+- name: backup router configurations
+  hosts: cisco
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+  - name: backup router configurations
+    ios_config:
+      backup: yes
+----
++
+[source,yaml]
+----
+ansible routers -m ping -c network_cli
+----
+
+ifdef::showscript[]
+Transcript:
+
+Enhancements in Ansible 2.5 introduced 2 new connection plugins `network_cli`
+and `NETCONF`. They make network connectivity more streamlined and playbooks
+have a similar look and feel to Server playbooks.
+
+Under the covers both use `ssh` as their transport
+
+Today we will be using `network_cli` though as NETCONF matures and gains wider
+adoption expect to see it more in the future.
+endif::showscript[]
+
+
+

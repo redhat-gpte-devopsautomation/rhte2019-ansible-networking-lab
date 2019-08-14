@@ -1,0 +1,13 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== Register your attendance
+
+image::images/pincode3.png[width=100%,height=100%]
+
+
+ifdef::showscript[]
+=== Transcript
+
+endif::showscript[]

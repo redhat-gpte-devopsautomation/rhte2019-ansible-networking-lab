@@ -1,0 +1,26 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== Ansible Linklight and Networking Labs on demand
+
+
+* https://github.com/network-automation/linklight
+* In https://rhpds.redhat.com now - Labs go live next week
+* Available to every SA and Consultant
+* Lightbulb Labs:
+** Engine 
+** Engine and Tower
+** Networking Cisco 
+** Networking Cisco Tower 
+** Networking F5 
+** Networking F5 Tower 
+* Runs on AWS in multiple regions
+* Up to 50 users
+
+
+ifdef::showscript[]
+Transcript:
+
+endif::showscript[]
+

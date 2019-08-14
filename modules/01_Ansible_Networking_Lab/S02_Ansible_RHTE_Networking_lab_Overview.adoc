@@ -1,0 +1,54 @@
+
+:scrollbar:
+:data-uri:
+:noaudio:
+== Ansible RHTE Networking lab Overview
+
+* The RHTE Lab
+* Ansible Networking Overview in 5 slides
+* *Lab Time*
+* Review
+* Next Steps
+
+ifdef::showscript[]
+=== Transcript
+
+Hello and Welcome, I'm _name_ and I'm happy you are joining us for the Ansible
+Network Automation Lab.
+
+We want to give you us much hands on time today as possible so we've embedded
+most of the training content inline in the lab itself.
+
+But before we start the labs a quick overview of the Lab environment itself, which has
+been pre-provisioned for you.
+
+Ansible is gaining significant traction in the networking space because of
+its excellent support for network devices and vendors, ease of use and
+learning, and also because its agentless architecture makes it superior to its
+competitors for use in a networking environment
+
+So we will be taking a whistle stop tour of some of the key Ansible Networking
+capabilities you'll be using today before we start.
+
+But first some questions:
+
+- How many of you would have a reasonable exposure to Ansible?
+- How many of you would consider yourself "networking people"? "Server people"?
+- How many of you are new to Ansible? *Welcome*
+
+This is a guided lab so everyone should be able to complete and we have some
+stretch and bonus labs for any of you who complete it quickly.
+
+Finally a thank you to our facilitators who are here to assist.
+
+
+<introduce them>
+
+Feel free to ask them, myself, and my co-instructor _instructor name_  any
+questions you may have during the session.
+
+
+endif::showscript[]
+
+
+
