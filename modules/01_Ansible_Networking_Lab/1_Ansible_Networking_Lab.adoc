@@ -52,7 +52,7 @@ machines.
 
 image:images/basic-topology.png[width=100%]
 
-[NOTE] 
+[NOTE]
 ====
 All 4 machines have publicly exposed IP addresses
 
@@ -61,7 +61,7 @@ All 4 machines have publicly exposed IP addresses
 ** `rtr1` - a cisco router
 * DC2 (Data Center 2)
 ** `backend` - the application itself
-** `rtr2` - a cisco router 
+** `rtr2` - a cisco router
 ====
 
 === Goals
@@ -108,7 +108,7 @@ ssh student<NUM>@<IP Address>
 [NOTE]
 ====
 All examples below assume a login id of `student1`, please substitute your own
-id provided to you, along with the IP address of your control node. 
+id provided to you, along with the IP address of your control node.
 
 In addition *IP addresses* shown in command output and in
 configuration files below will be different to yours.
@@ -354,11 +354,11 @@ sleep 0'\``,
 By default Ansible connections are handled transparently by `ssh` and no
 connection type needs to be set. This works well in a typical server environment
 but typically not for network devices. However Ansible has a link:https://docs.ansible.com/ansible/2.6/plugins/connection.html[pluggable connection
-architecture] which allows it be extended to connect to these and other devices. 
+architecture] which allows it be extended to connect to these and other devices.
 
 Recently, in Ansible 2.5, support for `network_cli` and `NETCONF` improved, and
 simplified, Ansible's network device connectivity. Both are also `ssh` based at their
-core. 
+core.
 
 Other examples of `connection:` types include `local` when connecting to the localhost
  and `winrm` which allows Ansible to connect to Microsoft Windows platforms.
@@ -369,11 +369,17 @@ Other examples of `connection:` types include `local` when connecting to the loc
 ----
 +
 ----
-rtr1 | SUCCESS => {
+rtr2 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
     "changed": false,
     "ping": "pong"
 }
-rtr2 | SUCCESS => {
+rtr1 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
     "changed": false,
     "ping": "pong"
 }
@@ -399,5 +405,17 @@ You can also try setting it to a different vendors network operating system such
 as `junos`, the result may at first be surprising. However `network_cli` uses
 similar mechanisms to connect to network devices so a misconfiguration here
 *may* not result in failure.
+
+NOTE: A good practice here would be to add the setting `ansible_connection=network_cli` to your inventory.
+For example in your `/etc/ansible/hosts`:
+[source,ini]
+----
+[cisco:vars]
+ansible_user=ec2-user
+ansible_network_os=ios
+ansible_connection=network_cli
+----
+This has the same effect as adding `connection: network_cli` to your playbooks or ad hoc commands. Note that when specified in an `inventory`
+you need the prefix `ansible_`. By setting it at an inventory level you will no longer have to specify it via `-c` or in your playbooks. The remainder of the labs assume you have not set this. Feel free to chose your approach.
 
 ====
