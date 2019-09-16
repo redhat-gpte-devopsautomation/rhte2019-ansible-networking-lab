@@ -9,10 +9,9 @@ reconfigure a pair of Cisco routers in a cloud environment.
 
 This will expose you to using Ansible to connect to, explore, and configure
 Network Devices. We will introduce you to the communications plugin
-`network_cli` and core Networking Modules including `ios_facts`, `ios_config`,
-and `ios_command`. In addition throughout the labs we hope to show you common
+`network_cli` and core Networking Modules including `ios_facts`, `cli_config`,
+and `cli_command`. In addition throughout the labs we hope to show you common
 features, elements, practices, and patterns in Ansible Playbook usage.
-
 
 == Lab Outline
 
@@ -23,17 +22,17 @@ features, elements, practices, and patterns in Ansible Playbook usage.
 
 
 * Part 2: Backup, Configure, and Explore the Routers facts
-- Use the `ios_config` Module in a Playbook to backup the routers
-- Use the `ios_command` Module to investigate the router configuration
-- Use the `ios_config` Module to start reconfiguration of the routers
+- Use the `cli_config` Module in a Playbook to backup the routers
+- Use the `cli_command` Module to investigate the router configuration
+- Use the `cli_config` Module to start reconfiguration of the routers
 
 * Part 3: Reconfigure the Routers to connect 2 sites
-- Use a Playbook with `ios_config` to create a GRE Tunnel
+- Use a Playbook with `cli_config` to create a GRE Tunnel
 - Use a Playbook with various networking modules to configure routing
-- Use `ios_config` to restore routers using the backups you created
+- Use `cli_config` to restore routers using the backups you created
 - Create a `site.yml` to automate all previous stages into a single Playbook
 
 
 * Bonus
 - Create various Roles to better structure Parts 2 and 3 above
-- Explore router configuration files and how to use with `ios_config`
+- Explore router configuration files and how to use with `cli_config`
