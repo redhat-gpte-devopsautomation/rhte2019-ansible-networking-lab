@@ -1,5 +1,7 @@
 :noaudio:
 
+link:./README.adoc[Lab Home Page]
+
 = Ansible Networking Automation
 
 == Part 3: Reconfigure the Routers to connect 2 sites
@@ -528,4 +530,4 @@ Create a GRE Tunnel Role: The GRE Tunnel playbook performs one function
 Create a Routing role: Setting up routing is a common function and again lends
   itself naturally to a role
 
-
+link:./README.adoc[Lab Home Page]

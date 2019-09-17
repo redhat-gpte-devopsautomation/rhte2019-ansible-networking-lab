@@ -1,5 +1,7 @@
 :noaudio:
 
+link:./README.adoc[Lab Home Page]
+
 = Ansible Networking Automation
 
 == Part 2: Backup, Configure, and Explore the Routers facts
@@ -524,5 +526,5 @@ alternative syntax uses `.` notation. For example your final line could have
 been expressed `"Router model: {{ hostvars[inventory_hostname].ansible_net_model
 }}"`
 ====
-+
 
+link:./README.adoc[Lab Home Page]

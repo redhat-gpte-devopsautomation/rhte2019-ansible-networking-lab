@@ -1,5 +1,7 @@
 :noaudio:
 
+link:./README.adoc[Lab Home Page]
+
 = Ansible Networking Automation
 
 == Part 1: Explore the environment with Ansible·
@@ -418,4 +420,4 @@ ansible_connection=network_cli
 This has the same effect as adding `connection: network_cli` to your playbooks or ad hoc commands. Note that when specified in an `inventory`
 you need the prefix `ansible_`. By setting it at an inventory level you will no longer have to specify it via `-c` or in your playbooks. The remainder of the labs assume you have not set this. Feel free to chose your approach.
 
-====
+link:./README.adoc[Lab Home Page]
