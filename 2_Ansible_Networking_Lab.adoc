@@ -290,7 +290,7 @@ ansible-doc cli_command
 Now try your updated _ad hoc_ command.
 +
 ----
-ansible cisco -m cli_command -a "commands='sh banner motd'" -c network_cli
+ansible cisco -m cli_command -a "command='sh banner motd'" -c network_cli
 ----
 +
 ----
