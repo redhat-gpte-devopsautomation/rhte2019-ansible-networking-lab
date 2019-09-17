@@ -1,0 +1,528 @@
+:noaudio:
+
+= Ansible Networking Automation
+
+== Part 2: Backup, Configure, and Explore the Routers facts
+
+=== Part 2 Overview
+
+- Use the `ios_config` Module in a Playbook to backup the routers
+- Use the `ios_command` Module to investigate the router configuration
+- Use the `ios_config` Module to start reconfiguration of the routers
+
+
+=== Secure the Digital Forensics: Backing Up
+
+Now you have established you have connectivity to both routers it is time to perform the first task.
+
+. FinTech InfoSec and their Legal department have requested that before modifying or re-configuring the hacked systems you preserve their existing "_hacked_" state. Write a simple playbook to backup both the Cisco routers 
++
+Using your editor of choice: `vim`, `nano`, and `emacs` are all installed,
+create a simple playbook `backup.yml` to achieve this. First we will do it the
+"old" way using the Cisco specfic module `ios_config`:
++
+.Examples of Network Configuration Modules
+|===
+|Network Platform|Configuration Module
+
+|Arista EOS
+|eos_config
+
+|Cisco IOS
+|ios_config
+
+|Cisco IOS-XR
+|iosxr_config
+
+|Cisco NX-OS
+|nxos_config
+
+|Juniper Junos
+|junos_config
+
+|VyOS
+|vyos_config
+|===
++
+----
+- name: backup router configurations
+  hosts: cisco
+  connection: network_cli 
+  gather_facts: no
+
+  tasks:
+
+  - name: backup router configuration
+    ios_config: 
+      backup: yes
+----
++
+NOTE: If you copy and paste the above playbook you _may_ get indentation issues. 
+Ansible provides a simple syntax checker, try `ansible-playbook --syntax-check backup.yml`
+to verify. A Best Practice is to use a linter, for example `ansible-review`.
+Ansible provides excellent online documentation, which is also
+available from the command line, for example `ansible-doc ios_config`. For a full list of modules try `ansible-doc -l`
+
++
+. Run the playbook
++
+----
+[student1@ansible ~]$ ansible-playbook backup.yml
+----
++
+----
+PLAY [backup router configurations]
+**********************************************************
+
+TASK [backup router configuration]
+***********************************************************
+ok: [rtr2]
+ok: [rtr1]
+
+PLAY RECAP
+***********************************************************************************
+rtr1                       : ok=1    changed=0    unreachable=0    failed=0
+rtr2                       : ok=1    changed=0    unreachable=0    failed=0
+----
++
+. Explore the resulting backup files which can be found in the backup sub-directory
++
+----
+[student1@ansible ~]$ ls -l backup
+----
++
+----
+total 16
+-rw-rw-r--. 1 student1 student1 4481 Sep  6 11:51 rtr1_config.2018-09-06@11:51:07
+-rw-rw-r--. 1 student1 student1 4482 Sep  6 11:51 rtr2_config.2018-09-06@11:51:07
+----
++
+You can open the text based backup files which can be used to restore a router
+  or as a starting point for a configuration file.
+
+=== Backing up using the `cli_command` module
+
+Whilst the `ios_config` module has a convenient `backup` parameter it is of course
+very much vendor specfic and similar modules exist for the major Network Platforms. 
+In Ansible 2.7 2 new, more generic, modules are introduced: `cli_config` and 
+`cli_command`. The advanatge here being that simpler and more generic playbooks can bedeveloped
+more cleanly supporting a multi-vendor environment. Bookmark this excellent introduction from the 
+Ansible Blog link:https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation[Deep Dive on cli_command for Network Automation]
+
+. Create a new playbook `cli-backup.yml` using the `cli_command` module. 
+Here you will capture the running configuration into a register before writing it
+away to a local backup file.
++
+----
+
+---
+- name: Backup router running configuration
+  hosts: cisco
+  connection: network_cli 
+  gather_facts: false
+
+  tasks:
+
+    - name: Backup router with cli_command
+      cli_command:
+        command: show run
+      register: r_backup
+
+    - name: Capture backup to control host
+      copy:
+        content: "{{ r_backup.stdout }}"
+        dest: "{{ inventory_hostname }}.backup"
+----
+
++
+. Run the playbook
++
+----
+[student1@ansible ~]$ ansible-playbook cli-backup.yml
+----
++
+----
+PLAY [Backup router running configuration] *************************************
+
+TASK [Backup router with cli_command] ******************************************
+ok: [rtr2]
+ok: [rtr1]
+
+TASK [Capture backup to control host] ******************************************
+changed: [rtr2]
+changed: [rtr1]
+
+PLAY RECAP *********************************************************************
+rtr1                       : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+rtr2                       : ok=2    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+----
++
+. Explore the resulting backup files which can be found in your current directory. 
++
+----
+[student1@ansible ~]$ ls -l rtr*
+----
++
+----
+-rw-rw-r--. 1 student1 student1 6865 Sep 16 02:19 rtr1.backup
+-rw-rw-r--. 1 student1 student1 6865 Sep 16 02:19 rtr2.backup
+----
+. Compare your new backups with the ones you made earlier.
+TIP: The sum command can be used to generate a checksum of each file and allow you
+to verify if your backups differ. The 2 backup files for each router should be identical.
++
+----
+sum rtr* backup/r* | sort
+----
++
+----
+40290     7 backup/rtr2_config.2019-09-16@01:39:50
+40290     7 rtr2.backup
+45891     7 backup/rtr1_config.2019-09-16@01:39:50
+45891     7 rtr1.backup
+----
++
+Notice the same checksums for each pair of `rtr1` and `rtr2` backups indicating that the files 
+are identical for each router. We would expect however that `rtr1` and `rtr2` are *not* identical.
++
+. Preserve the original backups for forensics and later comparisons.
++
+----
+[student1@ansible ~]$ mv backup original-backups
+----
+If you run the original `backup.yml` playbook again the `backup` directory will automatically be
+re-created and the `task` will create a newer version of each backup *deleting* the older version. 
+If you run the `cli-backup.yml` playbook your backups will be over-written. It is an easy *bonus
+exercise* time permitting to add a time stamp or similar to the `cli-backup.yml` playbook.
+
+
+== Check the Router's MOTD and Reconfigure if Necessary
+
+Now that the current state of the routers has been preserved it is time to start
+exploring them and returning them to their desired state.
+
+. Use another `ansible` Ad-Hoc command to retrieve the Routers banners.
+
++
+----
+[student1@ansible ~]$ ansible cisco -m ios_command -a "commands='sh banner motd'" -c network_cli
+----
++
+[TIP]
+====
+Note the argument passed via `commands`, `sh banner motd` is the syntax a
+Network Operator would use if logged in directly to a Cisco `ios` based router.
+This is very powerful in that it enables Network Operators to use the
+`*_command` networking modules to interact with network devices using the syntax
+with which they are already familiar. 
+====
+
++
+----
+rtr2 | SUCCESS => {
+    "changed": false,
+    "stdout": [
+        "You have been pwned by the Urban Seagulls Hackers Collective."
+    ],
+    "stdout_lines": [
+        [
+            "You have been pwned by the Urban Seagulls Hackers Collective."
+        ]
+    ]
+}
+rtr1 | SUCCESS => {
+    "changed": false,
+    "stdout": [
+        "You have been pwned by the Urban Seagulls Hackers Collective."
+    ],
+    "stdout_lines": [
+        [
+            "You have been pwned by the Urban Seagulls Hackers Collective."
+        ]
+    ]
+}
+----
++
+[TIP]
+====
+Whilst there is a more _function_ bases `ios_banner` module available, the optimal way to
+work with Ansible and network devices is to use higher level modules such as the `*_command` and `*_config` modules
+and allow Network Operators to use their day to day command set.
+====
+
+. Try to "port" the above _ad hoc_ command to use the `cli_command` module.
++
+----
+ansible cisco -m cli_command -a "commands='sh banner motd'" -c network_cli
+----
++
+----
+rtr2 | FAILED! => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "msg": "Unsupported parameters for (cli_command) module: commands Supported parameters include: answer, check_all, command, prompt, sendonly"
+}
+rtr1 | FAILED! => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "msg": "Unsupported parameters for (cli_command) module: commands Supported parameters include: answer, check_all, command, prompt, sendonly"
+}
+----
++
+Whilst this fails look at the error message carefully. The source of the failure
+is a very minor syntax change in the module argument. Try again replacing the 
+argument `"commands='sh banner motd'"` omitting the `s` in `commands`:
+Take a moment to use the `ansible-doc` command to explore `cli_command` in more depth.
++
+----
+ansible-doc cli_command
+----
++
+----
+<OUTPUT OMITTED>
+----
+Now try your updated _ad hoc_ command.
++
+----
+ansible cisco -m cli_command -a "commands='sh banner motd'" -c network_cli
+----
++
+----
+rtr2 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "stdout": "You have been pwned by the Urban Seagulls Hackers Collective.",
+    "stdout_lines": [
+        "You have been pwned by the Urban Seagulls Hackers Collective."
+    ]
+}
+rtr1 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "stdout": "You have been pwned by the Urban Seagulls Hackers Collective.",
+    "stdout_lines": [
+        "You have been pwned by the Urban Seagulls Hackers Collective."
+    ]
+}
+----
++
+NOTE: As mentioned, previously, to an experienced Cisco networking engineer the `sh banner
+motd` argument above is exactly what they would use at the `cli` of an `ios`
+based Cisco router. This is a simpler and cleaner approach than learning to use
+many task specific modules.
+
++
+That banner message output doesn't look too promising though it confirms
+suspicions that the routers have indeed been hacked or _pwned_, so your first task is to replace
+  the MOTD with a warning from FinTech legal.
++
+Use the `ios_config` module as you are now _configuring_ the managed device to change the MOTD
+  message to "Authorized Access only: Property of FinTech Inc."
+
+. Create a playbook `banner.yml` with your editor of choice
+
++
+----
+---
+- name: Update banner message
+  hosts: cisco
+  connection: network_cli
+  gather_facts: no
+
+  vars:
+    banner_message: Authorized Access only! Property of FinTech Inc.
+
+  tasks:
+
+  - name: "Update banner message to {{ banner_message }}"
+    ios_config:
+      lines:
+        "banner motd % {{ banner_message }} %"
+
+----
+
++
+[TIP]
+====
+Note the use of `vars` to setup a variable `banner_message` that can both be
+reused but also more easily edited. This can also be reset at the command line
+by using `ansible-playbook banner.yml -e "banner_message='my new message"`
+====
+
+. Run the playbook
+
++
+----
+[student1@ansible ~]$ ansible-playbook banner.yml
+----
++
+----
+PLAY [Update banner message]
+**************************************************************************************************
+
+TASK [Update banner message to Authorized Access only! Property of FinTech Inc.]
+**********************************************
+changed: [rtr1]
+changed: [rtr2]
+
+PLAY RECAP
+********************************************************************************************************************
+rtr1                       : ok=1    changed=1    unreachable=0    failed=0
+rtr2                       : ok=1    changed=1    unreachable=0    failed=0
+
+----
+
++
+[TIP]
+====
+Notice how the variable message was substituted in the Task `name:` message
+====
++
+. Check that the message was updated as expected
+
++
+----
+[student1@ansible ~]$ ansible cisco -m ios_command -a "commands='sh banner motd'" -c network_cli
+----
+
++
+----
+rtr2 | SUCCESS => {
+    "changed": false,
+    "stdout": [
+        "Authorized Access only! Property of FinTech Inc."
+    ],
+    "stdout_lines": [
+        [
+            "Authorized Access only! Property of FinTech Inc."
+        ]
+    ]
+}
+rtr1 | SUCCESS => {
+    "changed": false,
+    "stdout": [
+        "Authorized Access only! Property of FinTech Inc."
+    ],
+    "stdout_lines": [
+        [
+            "Authorized Access only! Property of FinTech Inc."
+        ]
+    ]
+}
+----
+
+==== Challange - Move the above playbook to `cli_config`
+
+TIP: The `ansible-doc` command not only defines the task parameters that `ios_config`
+takes but also gives examples. With a few minor changes `banner.yml` can be moved to
+the more modern `cli_config` module.
+
+== Explore the Router's Configuration and "Facts"
+
+
+Like servers it is possible to gather *facts* for networking devices including
+physical, virtual, and software configuration.  Unlike Linux and UNIX servers
+the traditional `setup` module does not gather facts about network devices and
+can be turned off in your playbook header section with `gather_facts: no`
+
+. Create a playbook, `cisco_facts.yml` to gather facts about the routers using the `ios_facts` module. Again, as with the `_config` modules, `_facts` modules exist for the major Networking Operating Systems 
++
+----
+
+---
+- name: Show router configurations
+  hosts: routers
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+  - name: gather ios_facts
+    ios_facts:
+    register: facts
+
+  - name: print out the results of ios_facts
+    debug:
+      msg: "{{ facts }}"
+
+----
+
++
+[TIP]
+====
+Each of the major networking platforms has their own `facts` module which is
+simple the name of the `ansible_networking_os` prefixing `_facts`. So in this
+case `ios_facts`, with Juniper devices the equivalent module would be
+`junos_facts`.
+
+Here we use a common pattern in Ansible to capture the results of running the
+`ios_facts` module in a `register` variable we have chosen to call `facts`. Then
+in the second, `debug`, task we output the contents of the variable `facts` 
+====
++
+
+. Run the playbook 
++
+----
+[student1@ansible ~]$ ansible-playbook cisco_facts.yml
+----
+. Examine the output (perhaps capture to a file or pipe to less)
++
+----
+                    "macaddress": "001e.bd88.e2bd",
+                    "mediatype": null,
+                    "mtu": 1500,
+                    "operstatus": "up",
+                    "type": "Virtual Port Group"
+                }
+            },
+            "ansible_net_memfree_mb": 1849261,
+            "ansible_net_memtotal_mb": 2185184,
+            "ansible_net_model": "CSR1000V",
+            "ansible_net_serialnum": "9QLMQHRDFEQ",
+            "ansible_net_version": "16.08.01a"
+        },
+        "changed": false,
+        "failed": false
+    }
+}
+
+PLAY RECAP ************************************************************************************************************************************************************
+rtr1                       : ok=2    changed=0    unreachable=0    failed=0
+rtr2                       : ok=2    changed=0    unreachable=0    failed=0
+----
++
+*Facts* modules return the facts as `JSON`. It is possible to extract from the
+facts returned just the value you are interested in to use in another task.
+Ansible stores this information about its target hosts as `hostvars`.
+
+. Add another task to your `cisco_facts.yml` playbook to extract the router
+  model.
+
+
++
+----
+- name: print out the router model
+    debug:
+      msg: "Router model: {{ hostvars[inventory_hostname]['ansible_net_model'] }}"
+----
+
++
+[TIP]
+====
+Note the syntax of the last line. Using `jinja2` substitution we tell `ansible`
+to use the `hostvars` for each target node in the inventory group
+(`inventory_hostname`) and extract the value of `ansible_net_model`. An
+alternative syntax uses `.` notation. For example your final line could have
+been expressed `"Router model: {{ hostvars[inventory_hostname].ansible_net_model
+}}"`
+====
++
+

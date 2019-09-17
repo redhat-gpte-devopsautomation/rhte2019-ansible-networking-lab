@@ -1,0 +1,421 @@
+:noaudio:
+
+= Ansible Networking Automation
+
+== Part 1: Explore the environment with Ansible·
+
+=== Part 1 Overview
+
+- Explore the environment with shell and Ansible commands·
+- Investigate Ansible's configuration and Inventory
+- Connect to the Cisco Routers using Ansible·
+
+=== Lab Overview
+
+Financial Services company FinTech provides back-end services for their clients in the
+Financial Services industry. Unfortunately a widespread global attack on Cisco Routers
+has disrupted their network infrastructure and broken a key customer facing application.
+
+Your role, as a  *Red Hat Ansible Networking Consultant*, is to regain control of the network infrastructure, restore network services,
+and protect against further attacks. FinTech have provided Red Hat with an outline of key steps for this engagement.
+
+* Assess the current state of the Networking Infrastructure
+** Explore the existing level of connectivity and router configuration
+* Preserve for InfoSec as forensics the current configurations of the routers
+** Backup both routers current configurations
+* Push legal warnings to the routers MOTD (_Message of the Day_)
+* Re-establish connectivity between the 2 FinTech Data Centers
+** Setup a networking tunnel between the 2 sites (GRE)
+** Restore routing between the 2 sites
+* Test the application now works as expected
+** Can the application front-end now access the remote data center hosting the
+application
+
+As an optional assignment, or stretch goal, FinTech would then like to:
+
+* Enhance the legal warnings to the routers MOTD (_Message of the Day_)
+* Create a role for the GRE Tunnel setup
+* Create a role for the Routing configuration setup
+
+=== Topology
+
+FinTech's topology is quite simple with 2 Data Centers: DC1 and DC2 which lack
+their own dedicated private inter-connection. Traffic between the 2 sites is
+routed across the Internet in a networking *Tunnel* created between 2 Cisco
+routers, one on each site. This GRE (Generic Routing Encapsulation) Tunnel between the 2 sites allows traffic to be simply routed back and forward between the 2 data Centers as if they had a dedicated connection between the 2 sites.
+
+
+These routers have been hacked in a recent global attack aimed at publicly
+exposed Cisco routers. Since then site-to-site communication has been broken
+though insecure public Internet access exists to all externally exposed
+machines.
+
+image:images/basic-topology.png[width=100%]
+
+[NOTE]
+====
+All 4 machines have publicly exposed IP addresses
+
+* DC1 (Date Center 1)
+** `ansible` - the control node, and application front-end
+** `rtr1` - a cisco router
+* DC2 (Data Center 2)
+** `backend` - the application itself
+** `rtr2` - a cisco router
+====
+
+=== Goals
+
+* Familiarize yourself with using Ansible in a Networking Context
+* Use `network_cli` to allow Ansible to communicate with network devices
+* Use `ios_facts` to see how facts are gathered from networking devices
+* Use `ios_config` to configure the routers
+* Use `ios_command` as an example of a Networking Command Module
+* Perform a variety of common networking tasks
+** Backup
+** Set a MOTD (Message of the day)
+** Explore the routers physical configuration
+** Configure a GRE Tunnel
+** Configure routing
+
+== Accessing your Lab
+
+
+* Your instructor and facilitator will give you your unique student id
+  `student1`, `student2` etc.,
+
+* Begin by going to
+  link:http://bit.ly/rhte-guidgrabber[http://bit.ly/rhte-guidgrabber]
+
+* From this page select the proper Lab Code (A1008) for the current lab.
+
+* Enter the Activation Key provided by the lab facilitator.
+
+* Click Next. (Do this only once)
+
+* The system will assign you a GUID(unique ID).
+
+* The URL to your lab login credentials will be supplied
+
+----
+ssh student<NUM>@<IP Address>
+----
+
+* Password `ansible`
+
+== Connect to your Control Host
+
+[NOTE]
+====
+All examples below assume a login id of `student1`, please substitute your own
+id provided to you, along with the IP address of your control node.
+
+In addition *IP addresses* shown in command output and in
+configuration files below will be different to yours.
+====
+
+. Before using `ssh` to  connect to your control node see if you can access the FinTech
+  application itself by using your browser, or curl, to access the front end of the
+application which is running on the Control Node itself.
++
+Your URL should look like this: `http://<CONTROL_NODE_IP_ADDRESS`, the *same* IP
+address that was supplied for your unique login. For example:
++
+----
+http://34.231.242.151/
+----
++
+
+Once the internal networks have been restored you would expect to see the
+application itself, if not for now expect a *503* error message.
+
+. `ssh` onto the Control Node from where you will be working with your login
+  details provided by the above steps.
++
+----
+ssh student<number>@<IP_ADDRESS>
+----
++
+Your password is: `ansible`
++
+. Explore your ansible configuration
++
+----
+[student1@ansible ~]$ ansible --version
+----
++
+----
+ansible 2.8.4
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/home/student1/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, May  3 2017, 07:55:04) [GCC 4.8.5 20150623 (Red Hat 4.8.5-14)]
+----
++
+[TIP]
+====
+Your output may differ slightly. You should see a recent version of Ansible (>
+`2.8.4`) and you can see you are using the default `ansible.cfg` file which allows
+you to customize behavior.
+link:https://docs.ansible.com/ansible/latest/installation_guide/intro_configuration.html[ansible.cfg
+documentation]
+====
+. Investigate how your `ansible.cfg` has been configured
++
+----
+[student1@ansible ~]$ cat /etc/ansible/ansible.cfg
+----
++
+----
+[defaults]
+connection = smart
+timeout = 60
+host_key_checking = False
+private_key_file = /home/student1/.ssh/aws-private.pem
+----
++
+[TIP]
+====
+This is a simple configuration and the lack of an `inventory` setting tells you
+that Ansible will default to `/etc/ansible/hosts`. During the rest of this lab
+you will be over-riding that `connection` setting when necessary to connect to
+your routers.
+====
++
+
+. Explore your inventory
++
+----
+[student1@ansible ~]$ cat /etc/ansible/hosts
+----
++
+----
+[all:vars]
+ansible_user=student1
+ansible_pass=ansible
+ansible_port=22
+
+[routers:children]
+cisco
+
+[cisco]
+rtr1 ansible_host=18.207.110.148 ansible_user=ec2-user private_ip=172.16.64.249
+rtr2 ansible_host=34.231.240.85 ansible_user=ec2-user private_ip=172.17.246.87
+
+
+[cisco:vars]
+ansible_user=ec2-user
+ansible_network_os=ios
+
+
+[dc1]
+rtr1
+
+[dc2]
+rtr2
+
+[hosts]
+host1 ansible_host=18.207.100.36 ansible_user=ec2-user private_ip=172.17.129.128
+
+[control]
+ansible ansible_host=34.238.27.25 ansible_user=ec2-user private_ip=172.16.156.31
+----
++
+. Note the Cisco group specific settings in the inventory file. In particular
+  `ansible_network_os=ios`.
++
+[TIP]
+====
+Ansible uses `ansible_network_os` to inform Ansible which network platform this hosts corresponds to. This is
+required when using `connection` plugins `network_cli` or `netconf`. We will use be
+using `connection: network_cli` later which is automatically combined with this.
+
+Here for example `ansible_network_os=ios` tells Ansible the Networking Operating
+System is Cisco's `ios`. Platforms supported by `ansible_network_os` include:
+
+.`ansible_network_os` examples
+|===
+|Network Platform|`ansible_network_os`
+
+|Arista EOS
+|eos
+
+|Cisco IOS
+|ios
+
+|Cisco IOS-XR
+|iosxr
+
+|Cisco NX-OS
+|nxos
+
+|Juniper Junos
+|junos
+
+|VyOS
+|vyos
+|===
+
+====
+
+. Check Ansible can see the hosts in your inventory
++
+----
+[student1@ansible ~]$ ansible all --list-hosts
+----
++
+----
+hosts (4):
+    rtr1
+    rtr2
+    ansible
+    host1
+----
++
+[TIP]
+====
+The `all` field in the previous command refers to the automatically created
+group `all`. You can retry the command using another group name instead. For
+example `cisco` or `dc`. Using Groups liberally in inventory files gives
+flexibility in the long run and is considered a Best Practice.
+link:https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html[Working
+with Inventory]
+====
+
+
+=== Investigate the Network Infrastructure
+
+. Check if your host `ansible`  can connect to the `backend` server. `Control-c` will break out of this command when it fails to complete.
++
+----
+[student1@ansible ~]$ ping backend
+PING backend (172.17.25.74) 56(84) bytes of data.
+----
+
+NOTE: The ping fails as your ansible control node `ansible` cannot find a route to `backend`.
+
+. Check if you can connect to both routers using an ansible Ad-Hoc command
++
+----
+[student1@ansible ~]$ ansible cisco -m ping
+----
++
+[TIP]
+====
+Ansible supports calling modules directly from the command line via the
+`ansible` command.  These are called Ad-Hoc commands and are often used to establish connectivity as in here
+with the `ping` module. Another common use case is to inspect a host or group of hosts with fact gathering modules
+like `setup`.
+
+You can optionally pass parameters to Ad-Hoc commands with the `-a` option:
+----
+ansible localhost -m debug -a "msg='passing a parameter'"
+
+----
+====
++
+. Note that the ping module, without additional parameters, is unable to successfully communicate with the Routers
++
+----
+ [WARNING]: sftp transfer mechanism failed on [18.214.36.220]. Use
+ANSIBLE_DEBUG=1 to see detailed information
+
+ [WARNING]: sftp transfer mechanism failed on [35.170.71.88]. Use
+ANSIBLE_DEBUG=1 to see detailed information
+
+rtr1 | FAILED! => {
+    "changed": false,
+    "module_stderr": "Shared connection to 18.214.36.220 closed.\r\n",
+    "module_stdout": " You have been pwned by the Urban Seagulls Hackers
+Collective. \r\n\r\n\r\nLine has invalid autocommand \"/bin/sh -c
+'/usr/bin/python '\"'\"'\"` echo Line has invalid aut\"/ping.py'\"'\"' && sleep
+0'\``,
+    "msg": "MODULE FAILURE",
+    "rc": 0
+}
+rtr2 | FAILED! => {
+    "changed": false,
+    "module_stderr": "Shared connection to 35.170.71.88 closed.\r\n",
+    "module_stdout": " You have been pwned by the Urban Seagulls Hackers
+Collective. \r\n\r\n\r\nLine has invalid autocommand \"/bin/sh -c
+'/usr/bin/python '\"'\"'\"` echo Line has invalid autoc\"/ping.py'\"'\"' &&
+sleep 0'\``,
+    "msg": "MODULE FAILURE",
+    "rc": 0
+''''
+----
+. Retry the  `ansible ping` again selecting the `group` *cisco* and this time setting the connection type to
+  `network_cli`
+
++
+[NOTE]
+====
+By default Ansible connections are handled transparently by `ssh` and no
+connection type needs to be set. This works well in a typical server environment
+but typically not for network devices. However Ansible has a link:https://docs.ansible.com/ansible/2.6/plugins/connection.html[pluggable connection
+architecture] which allows it be extended to connect to these and other devices.
+
+Recently, in Ansible 2.5, support for `network_cli` and `NETCONF` improved, and
+simplified, Ansible's network device connectivity. Both are also `ssh` based at their
+core.
+
+Other examples of `connection:` types include `local` when connecting to the localhost
+ and `winrm` which allows Ansible to connect to Microsoft Windows platforms.
+====
++
+----
+[student1@ansible ~]$ ansible cisco -m ping -c network_cli
+----
++
+----
+rtr2 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+rtr1 | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+----
+
+[TIP]
+====
+
+Here Ansible combines the connection type `-c network_cli` with the
+`ansible_network_os=ios` inventory variable and now knows how to successfully
+communicate with the network device.
+
+Ansible allows you to pass variables like `ansible_network_os` on the command
+line with the `-e` option and these have the highest precedence i.e. they will
+override the setting in your inventory file.
+
+You could try setting this to an illegal value, for example:
+
+----
+ansible cisco -m ping -c network_cli -e ansible_network_os=linux
+----
+You can also try setting it to a different vendors network operating system such
+as `junos`, the result may at first be surprising. However `network_cli` uses
+similar mechanisms to connect to network devices so a misconfiguration here
+*may* not result in failure.
+
+NOTE: A good practice here would be to add the setting `ansible_connection=network_cli` to your inventory.
+For example in your `/etc/ansible/hosts`:
+[source,ini]
+----
+[cisco:vars]
+ansible_user=ec2-user
+ansible_network_os=ios
+ansible_connection=network_cli
+----
+This has the same effect as adding `connection: network_cli` to your playbooks or ad hoc commands. Note that when specified in an `inventory`
+you need the prefix `ansible_`. By setting it at an inventory level you will no longer have to specify it via `-c` or in your playbooks. The remainder of the labs assume you have not set this. Feel free to chose your approach.
+
+====
