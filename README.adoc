@@ -15,18 +15,18 @@ features, elements, practices, and patterns in Ansible Playbook usage.
 
 == Lab Outline
 
-* link:file:./1_Ansible_Networking_Lab.adoc[Part 1: Explore the environment with Ansible]
+* link:./1_Ansible_Networking_Lab.adoc[Part 1: Explore the environment with Ansible]
 - Explore the environment with shell and Ansible commands 
 - Investigate Ansible's configuration and Inventory
 - Connect to the Cisco Routers using Ansible 
 
 
-* link:file:./2_Ansible_Networking_Lab.adoc[Part 2: Backup, Configure, and Explore the Routers facts]
+* link:./2_Ansible_Networking_Lab.adoc[Part 2: Backup, Configure, and Explore the Routers facts]
 - Use the `cli_config` Module in a Playbook to backup the routers
 - Use the `cli_command` Module to investigate the router configuration
 - Use the `cli_config` Module to start reconfiguration of the routers
 
-* link:file:./3_Ansible_Networking_Lab.adoc[Part 3: Reconfigure the Routers to connect 2 sites]
+* link:./3_Ansible_Networking_Lab.adoc[Part 3: Reconfigure the Routers to connect 2 sites]
 - Use a Playbook with `cli_config` to create a GRE Tunnel
 - Use a Playbook with various networking modules to configure routing
 - Use `cli_config` to restore routers using the backups you created
