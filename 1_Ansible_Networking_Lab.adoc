@@ -80,25 +80,6 @@ All 4 machines have publicly exposed IP addresses
 ** Configure a GRE Tunnel
 ** Configure routing
 
-== Accessing your Lab
-
-
-* Your instructor and facilitator will give you your unique student id
-  `student1`, `student2` etc.,
-
-* Begin by going to
-  link:http://bit.ly/rhte-guidgrabber[http://bit.ly/rhte-guidgrabber]
-
-* From this page select the proper Lab Code (A1008) for the current lab.
-
-* Enter the Activation Key provided by the lab facilitator.
-
-* Click Next. (Do this only once)
-
-* The system will assign you a GUID(unique ID).
-
-* The URL to your lab login credentials will be supplied
-
 ----
 ssh student<NUM>@<IP Address>
 ----

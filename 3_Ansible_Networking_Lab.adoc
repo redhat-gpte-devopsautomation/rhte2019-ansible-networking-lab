@@ -22,7 +22,7 @@ to the attack on the routers.
 
 If successful you will have completed the first part of re-establishing communications between the 2 sites.
 
-. Start to create the GRE Tunnel Playbook 
+. Start to create the GRE Tunnel Playbook
 +
 .. Create a new playbook `gre.yml` in your editor of choice (`vim`, `emacs`, and
 `nano` installed)
@@ -45,7 +45,7 @@ extract the `ansible_host` IP addresses for the 2 routers. Add this to your
 `gre.yml` playbook.
 +
 ----
-vars: 
+vars:
   rtr1_public_ip: "{{ hostvars['rtr1']['ansible_host'] }}"
   rtr2_public_ip: "{{ hostvars['rtr2']['ansible_host'] }}"
 ----
@@ -124,11 +124,11 @@ matches the above.
 ====
 There where multiple ways of implementing the above playbook where specific tasks
 or groups of tasks execute against specific hosts. For example we could have used 2 playbooks with one
-for each. 
+for each.
 
 Here we used a single playbook with `when:` to ensure the specific task is
 only applied to the specific router. Take a moment to look at each of the `when:`
-statements. 
+statements.
 ====
 +
 If the FinTech engagement grows in the future and you have more time with the client
@@ -159,7 +159,7 @@ PING backend (172.17.0.45) 56(84) bytes of data.
 ----
 
 
-You now need to configure routing between the 2 routers to complete the connectivity between the 2 sites. 
+You now need to configure routing between the 2 routers to complete the connectivity between the 2 sites.
 
 == Setup Routing Between the 2 Sites
 
@@ -437,7 +437,7 @@ new playbook `host-routes.yml` with the following.
 ====
 This time instead of using a `when:` as we did in our earlier playbooks to isolate each router, here as we
 configure the 2 servers `ansible` and `backend` we combine 2 separate playbooks in 1
-file.  
+file.
 
 Both playbook header also lack a `connection:` setting as Ansible by
 default assumes an ordinary `ssh` connection.
@@ -479,12 +479,12 @@ This is the ansible host you are currently working on
 `http://<CONTROL_NODE_IP_ADDRESS`
 ====
 
-== Success - Congratulations 
+== Success - Congratulations
 
 Whilst the application might not look quite what you expected you have
 successfully restored the GRE Tunnel and updated the routers routing
 configuration to restore routing. *Perhaps this is not the application you were
-looking for?* 
+looking for?*
 
 Whilst the application engineers can get to work fixing the application itself,
 if you have time left over - some stretch goals.
@@ -493,11 +493,13 @@ if you have time left over - some stretch goals.
 Finished, still time on the clock? Chose from one or more of the exercises
 below:
 
+==== Convert some, or all, of your playbooks to use `cli_config`
+
 ==== Wrap your playbooks in a `site.yml` playbook
 As you worked through the lab you executed your playbooks individually
 
-* Create a `site.yml` playbook 
-* Include each of the key re-configuration playbooks, you will need: 
+* Create a `site.yml` playbook
+* Include each of the key re-configuration playbooks, you will need:
 ** `banner.yml`
 ** `gre.yml`
 ** `router-config.yml`
