@@ -54,9 +54,7 @@ machines.
 
 image:images/basic-topology.png[width=100%]
 
-[NOTE]
-====
-All 4 machines have publicly exposed IP addresses
+=== The Instances
 
 * DC1 (Date Center 1)
 ** `ansible` - the control node, and application front-end
@@ -64,7 +62,6 @@ All 4 machines have publicly exposed IP addresses
 * DC2 (Data Center 2)
 ** `backend` - the application itself
 ** `rtr2` - a cisco router
-====
 
 === Goals
 
